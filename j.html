@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>四平台接单软件</title>
+<style>
+  :root{
+    --bg:#f3f5f7; --card:#ffffff; --card2:#f8fafc; --line:#e5e9ee; --line2:#eef1f4;
+    --text:#17202b; --muted:#6b7885; --faint:#94a3b1;
+    --blue:#1f6feb; --blue-d:#1859c9; --blue-soft:#eaf2fe;
+    --green:#16a34a; --green-soft:#e7f7ee;
+    --red:#dc2626; --red-soft:#fdecec;
+    --amber:#b45309; --amber-soft:#fdf3e3;
+    --gray-soft:#eef1f4;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1319; --card:#161d26; --card2:#1a232f; --line:#26303d; --line2:#202a36;
+      --text:#e8edf2; --muted:#9aa8b6; --faint:#6d7c8c;
+      --blue:#4d94ff; --blue-d:#6aa6ff; --blue-soft:#16283f;
+      --green:#3ecf74; --green-soft:#123324;
+      --red:#f26d6d; --red-soft:#3a1d1d;
+      --amber:#e5a44a; --amber-soft:#382a14;
+      --gray-soft:#232e3b;
+      --shadow:0 1px 2px rgba(0,0,0,.3);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15px;line-height:1.55}
+  button,[role="button"],select,input:not([type="checkbox"]){min-height:2.25rem}
+  button{font-family:inherit;cursor:pointer}
+  .wrap{max-width:1180px;margin:0 auto;padding:14px 14px 48px}
+
+  /* ---------- top stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+  .stat .k{font-size:12.5px;color:var(--muted)}
+  .stat .v{font-size:24px;font-weight:700;line-height:1.25;margin-top:2px;font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:13px;font-weight:600;color:var(--muted)}
+  .stat .d{font-size:12px;color:var(--faint);margin-top:1px}
+
+  /* ---------- platform strip ---------- */
+  .platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+  .plat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px;min-width:0}
+  .plat .logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;flex:none}
+  .p-jiang .logo{background:#e8590c}.p-luban .logo{background:#1971c2}.p-gong .logo{background:#0ca678}.p-wan .logo{background:#e03131}
+  .plat .nm{font-weight:700;font-size:15px;white-space:nowrap}
+  .plat .st{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
+  .plat .cnt{margin-left:auto;text-align:right;flex:none}
+  .plat .cnt b{font-size:17px;font-variant-numeric:tabular-nums}
+  .plat .cnt span{display:block;font-size:11.5px;color:var(--faint)}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px}
+  .card-h{padding:14px 16px 0}
+  .card-b{padding:12px 16px 16px}
+
+  /* ---------- auto quote (screenshot panel) ---------- */
+  .aq-head{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .aq-title{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:700}
+  .pulse{width:11px;height:11px;border-radius:50%;background:var(--green);flex:none;position:relative}
+  .pulse.on::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--green);opacity:.45;animation:pl 1.8s ease-out infinite}
+  .pulse.off{background:var(--faint)}
+  @keyframes pl{0%{transform:scale(.5);opacity:.6}100%{transform:scale(1.15);opacity:0}}
+  @media (prefers-reduced-motion: reduce){.pulse.on::after{animation:none}}
+  .aq-switch{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+  .switch{display:inline-flex;flex:none}
+  .switch input{appearance:none;-webkit-appearance:none;width:48px;height:28px;border-radius:99px;background:var(--gray-soft);border:1px solid var(--line);position:relative;cursor:pointer;transition:.18s;margin:0;flex:none;padding:0}
+  .switch input::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.18s}
+  .switch input:checked{background:var(--green);border-color:var(--green)}
+  .switch input:checked::after{left:22px}
+  .switch input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .aq-rules{color:var(--muted);font-size:13.5px;margin-top:7px;line-height:1.7}
+  .aq-rules b{color:var(--text);font-weight:600}
+  .aq-actions{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
+  .btn{border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:9px;padding:6px 16px;font-size:14px;font-weight:600;min-height:38px}
+  .btn:hover{background:var(--blue-soft)}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn.primary:hover{background:var(--blue-d)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.ghost{border-color:var(--line);color:var(--muted)}
+  .btn.ghost:hover{background:var(--card2);color:var(--text)}
+  .btn.sm{min-height:34px;padding:3px 12px;font-size:13px;border-radius:8px}
+  .aq-logwrap{border-top:1px dashed var(--line);margin-top:14px}
+  .aq-log{max-height:308px;overflow-y:auto;padding:6px 2px 2px}
+  .log-row{display:flex;gap:9px;align-items:baseline;padding:6.5px 4px;border-bottom:1px solid var(--line2);font-size:13.5px}
+  .log-row:last-child{border-bottom:none}
+  .log-row.fresh{animation:fin .5s ease}
+  @keyframes fin{from{background:var(--blue-soft)}to{background:transparent}}
+  @media (prefers-reduced-motion: reduce){.log-row.fresh{animation:none}}
+  .log-t{color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px}
+  .tag{flex:none;font-size:12px;font-weight:600;padding:1px 8px;border-radius:6px;white-space:nowrap;line-height:1.6}
+  .tag.skip{background:var(--gray-soft);color:var(--muted)}
+  .tag.ok{background:var(--green-soft);color:var(--green)}
+  .tag.fail{background:var(--red-soft);color:var(--red)}
+  .tag.confirm{background:var(--blue-soft);color:var(--blue);font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+  .tag.manual{background:var(--amber-soft);color:var(--amber)}
+  .tag.alert{background:var(--amber);color:#fff}
+  .mode-switch{display:flex;background:var(--gray-soft);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;margin-bottom:13px}
+  .mode-switch button{flex:1;border:none;background:transparent;color:var(--muted);border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;min-height:38px}
+  .mode-switch button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+  .log-oid{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .log-price{color:var(--red);font-weight:700;white-space:nowrap}
+  .log-desc{color:var(--muted);min-width:0}
+  .log-desc b{color:var(--text);font-weight:600}
+  .aq-empty{padding:18px 6px;color:var(--faint);font-size:13.5px;text-align:center}
+
+  /* ---------- layout ---------- */
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start}
+  .side{position:sticky;top:12px}
+  .sec-title{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .sec-title .sub{font-size:12.5px;color:var(--faint);font-weight:400}
+
+  /* ---------- filters ---------- */
+  .f-row{margin-bottom:13px}
+  .f-row label.fl{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .f-inline{display:flex;gap:8px;align-items:center}
+  .f-inline input[type=number]{width:86px}
+  input[type=number],input[type=text],select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:14px;color:var(--text);font-family:inherit}
+  input[type=range]{flex:1;accent-color:var(--blue);min-height:2.25rem}
+  .range-val{font-weight:700;font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+  .chk{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:14px;cursor:pointer;min-height:36px}
+  .chk input{width:18px;height:18px;accent-color:var(--blue);flex:none;margin:0}
+  .chk small{color:var(--faint);margin-left:auto;text-align:right}
+  .cat-grid{display:flex;flex-wrap:wrap;gap:7px}
+  .cat-chip{border:1px solid var(--line);background:var(--card2);color:var(--muted);border-radius:99px;padding:5px 12px;font-size:13px;min-height:34px}
+  .cat-chip.on{background:var(--red-soft);border-color:var(--red);color:var(--red);font-weight:600}
+  .f-note{font-size:12.5px;color:var(--faint);line-height:1.6;border-top:1px dashed var(--line);padding-top:10px;margin-top:2px}
+  .hist-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+  .hist-tags span{background:var(--green-soft);color:var(--green);font-size:12px;padding:2px 9px;border-radius:99px;font-weight:600}
+
+  /* ---------- orders ---------- */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:99px;padding:5px 14px;font-size:13.5px;font-weight:600;min-height:36px}
+  .tab.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .tab .n{font-variant-numeric:tabular-nums;opacity:.75;font-weight:400}
+  .plat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .ptab{border:1px solid var(--line);background:var(--card2);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:13px;min-height:34px;font-weight:600}
+  .ptab.on{color:#fff}
+  .ptab.on[data-p="all"]{background:var(--text);border-color:var(--text)}
+  .ptab.on[data-p="jiang"]{background:#e8590c;border-color:#e8590c}
+  .ptab.on[data-p="luban"]{background:#1971c2;border-color:#1971c2}
+  .ptab.on[data-p="gong"]{background:#0ca678;border-color:#0ca678}
+  .ptab.on[data-p="wan"]{background:#e03131;border-color:#e03131}
+  .searchbar{display:flex;gap:8px;margin-top:10px}
+  .searchbar input{flex:1;min-width:0}
+  .order{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;background:var(--card)}
+  .order:hover{border-color:var(--faint)}
+  .o-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .o-plat{font-size:12px;font-weight:700;color:#fff;padding:2px 9px;border-radius:6px;white-space:nowrap}
+  .o-plat.jiang{background:#e8590c}.o-plat.luban{background:#1971c2}.o-plat.gong{background:#0ca678}.o-plat.wan{background:#e03131}
+  .o-id{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .o-time{margin-left:auto;font-size:12.5px;color:var(--faint);white-space:nowrap}
+  .o-status{font-size:12px;font-weight:700;padding:2px 9px;border-radius:6px;white-space:nowrap}
+  .o-status.pending{background:var(--blue-soft);color:var(--blue)}
+  .o-status.quoted{background:var(--green-soft);color:var(--green)}
+  .o-status.skipped{background:var(--gray-soft);color:var(--muted)}
+  .o-status.failed{background:var(--red-soft);color:var(--red)}
+  .o-status.alerted{background:var(--amber-soft);color:var(--amber)}
+  .o-title{font-weight:700;font-size:15.5px;margin-top:7px}
+  .o-meta{display:flex;flex-wrap:wrap;gap:5px 16px;margin-top:5px;font-size:13px;color:var(--muted)}
+  .o-meta b{color:var(--text);font-weight:600}
+  .o-price{color:var(--red);font-weight:700}
+  .o-reason{margin-top:7px;font-size:13px;background:var(--card2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;color:var(--muted)}
+  .o-reason b{color:var(--text)}
+  .o-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .empty{padding:34px 10px;text-align:center;color:var(--faint);font-size:14px}
+
+  /* ---------- modal / toast ---------- */
+  .mask{position:fixed;inset:0;background:rgba(10,15,22,.5);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+  .mask.open{display:flex}
+  .sheet{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:520px;padding:18px 18px 22px;max-height:88vh;overflow-y:auto}
+  @media(min-width:640px){.mask{align-items:center;padding:16px}.sheet{border-radius:16px}}
+  .sheet h3{margin:0 0 4px;font-size:16.5px}
+  .sheet .s-sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+  .sheet label.fl{display:block;font-size:13px;color:var(--muted);font-weight:600;margin:12px 0 5px}
+  .sheet input[type=number],.sheet input[type=text]{width:100%}
+  .sheet .row-btns{display:flex;gap:9px;margin-top:18px}
+  .sheet .row-btns .btn{flex:1}
+  .est{background:var(--blue-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:12px;line-height:1.7}
+  .alert-pop{position:fixed;right:16px;bottom:16px;width:min(370px,calc(100vw - 24px));background:var(--card);border:1px solid var(--amber);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);z-index:70;padding:14px 16px;display:none}
+  .alert-pop.show{display:block;animation:apin .3s ease}
+  @keyframes apin{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+  @media (prefers-reduced-motion: reduce){.alert-pop.show{animation:none}}
+  .alert-pop h4{margin:0 0 4px;font-size:15.5px;display:flex;align-items:center;gap:8px}
+  .alert-pop .ap-item{font-size:13.5px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--line2);line-height:1.6}
+  .alert-pop .ap-item b{color:var(--text)}
+  .alert-pop .ap-item .p{color:var(--red);font-weight:700}
+  .alert-pop .row-btns{display:flex;gap:8px;margin-top:12px}
+  .alert-pop .row-btns .btn{flex:1;padding-left:6px;padding-right:6px}
+  @media(max-width:460px){.alert-pop{left:12px;right:12px;width:auto}}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:92vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .foot{color:var(--faint);font-size:12.5px;text-align:center;margin-top:18px;line-height:1.7}
+
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .side{position:static}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .platforms{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:460px){
+    .platforms{grid-template-columns:1fr 1fr}
+    .plat .cnt{display:none}
+    .log-row{flex-wrap:wrap;gap:4px 8px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- stats -->
+  <div class="stats">
+    <div class="stat"><div class="k">今日新单（四平台）</div><div class="v" id="stNew">0</div><div class="d">演示数据 · 模拟订单池</div></div>
+    <div class="stat"><div class="k">今日已报价</div><div class="v" id="stQuoted">0 <small>单</small></div><div class="d" id="stQuotedD">自动 + 手动</div></div>
+    <div class="stat"><div class="k">今日跳过</div><div class="v" id="stSkipped">0 <small>单</small></div><div class="d">不符合筛选规则</div></div>
+    <div class="stat"><div class="k">预计收入（已报价）</div><div class="v" id="stMoney">¥0</div><div class="d">按报价金额合计</div></div>
+  </div>
+
+  <!-- platforms -->
+  <div class="platforms" id="platStrip"></div>
+
+  <!-- auto quote panel (per screenshot) -->
+  <section class="card" aria-label="自动报价">
+    <div class="card-b" style="padding-top:14px">
+      <div class="mode-switch" role="tablist" aria-label="工作模式">
+        <button id="modeQuote" class="on" type="button">自动报价模式</button>
+        <button id="modeMonitor" type="button">监控提醒模式</button>
+      </div>
+      <div class="aq-head">
+        <div class="aq-title"><span class="pulse on" id="aqPulse"></span><span id="aqTitleText">自动报价</span></div>
+        <label class="aq-switch">自动运行
+          <span class="switch"><input type="checkbox" id="autoToggle" checked aria-label="自动运行开关"></span>
+        </label>
+      </div>
+      <p class="aq-rules" id="aqRules"></p>
+      <div class="aq-actions">
+        <button class="btn primary" id="runBtn">立即执行一轮</button>
+        <button class="btn" id="collapseBtn">收起自动记录</button>
+        <button class="btn ghost" id="newOrdersBtn">模拟新单到达</button>
+        <button class="btn ghost" id="soundBtn">提醒声音：开</button>
+      </div>
+      <div class="aq-logwrap" id="logWrap">
+        <div class="aq-log" id="aqLog"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <!-- orders -->
+    <section class="card" aria-label="订单池">
+      <div class="card-h">
+        <div class="sec-title">订单池 <span class="sub">四平台汇总 · 点订单可手动报价 / 跳过</span></div>
+        <div class="plat-tabs" id="platTabs" style="margin-top:12px">
+          <button class="ptab on" data-p="all">全部平台</button>
+          <button class="ptab" data-p="jiang">匠多多</button>
+          <button class="ptab" data-p="luban">鲁班</button>
+          <button class="ptab" data-p="gong">工奇兵</button>
+          <button class="ptab" data-p="wan">万师傅</button>
+        </div>
+        <div class="tabs" id="statusTabs" style="margin-top:9px">
+          <button class="tab on" data-s="all">全部 <span class="n" id="nAll"></span></button>
+          <button class="tab" data-s="pending">待处理 <span class="n" id="nPending"></span></button>
+          <button class="tab" data-s="quoted">已报价 <span class="n" id="nQuoted"></span></button>
+          <button class="tab" data-s="skipped">已跳过 <span class="n" id="nSkipped"></span></button>
+          <button class="tab" data-s="failed">失败 <span class="n" id="nFailed"></span></button>
+          <button class="tab" data-s="alerted">已提醒 <span class="n" id="nAlerted"></span></button>
+        </div>
+        <div class="searchbar">
+          <input type="text" id="searchInput" placeholder="搜订单号 / 类目 / 小区，如 P5294、衣柜、万科" aria-label="搜索订单">
+          <button class="btn ghost" id="clearSearch">清空</button>
+        </div>
+      </div>
+      <div class="card-b" id="orderList" style="padding-top:4px"></div>
+    </section>
+
+    <!-- filters -->
+    <aside class="card side" aria-label="筛选规则">
+      <div class="card-h"><div class="sec-title">筛选规则 <span class="sub">改完即时生效</span></div></div>
+      <div class="card-b">
+        <div class="f-row">
+          <label class="fl" for="refreshMin">自动刷新间隔</label>
+          <div class="f-inline">
+            <input type="number" id="refreshMin" value="5" min="1" max="60"> <span style="color:var(--muted);font-size:13.5px">分钟一轮</span>
+          </div>
+        </div>
+        <div class="f-row">
+          <label class="fl" for="maxDist">最大接单距离</label>
+          <div class="f-inline">
+            <input type="range" id="maxDist" min="1" max="30" step="0.5" value="5">
+            <span class="range-val" id="maxDistVal">≤ 5 km</span>
+          </div>
+        </div>
+        <div class="f-row">
+          <label class="fl" for="minPrice">最低报价金额</label>
+          <div class="f-inline">
+            <span style="color:var(--muted)">¥</span>
+            <input type="number" id="minPrice" value="100" min="0" step="10">
+            <span style="color:var(--muted);font-size:13.5px">起，低于不报</span>
+          </div>
+        </div>
+        <div class="f-row">
+          <label class="chk"><input type="checkbox" id="exDelivery" checked>排除送货 / 搬运单<small>只做安装维修</small></label>
+          <label class="chk"><input type="checkbox" id="exMulti" checked>多人单不报<small>需 2 人及以上</small></label>
+          <label class="chk"><input type="checkbox" id="needHistory" checked>需有同类报价历史<small>没报过的不碰</small></label>
+          <label class="chk"><input type="checkbox" id="useCapacity" checked>按接单能力判断<small>超上限暂停</small></label>
+        </div>
+        <div class="f-row" id="capRow">
+          <label class="fl">接单能力（今日上限 / 同时进行中）</label>
+          <div class="f-inline">
+            <input type="number" id="capDay" value="8" min="1" max="50" aria-label="今日上限">
+            <span style="color:var(--muted);font-size:13.5px">单/天 · 进行中</span>
+            <input type="number" id="capNow" value="3" min="1" max="20" aria-label="同时进行中上限">
+            <span style="color:var(--muted);font-size:13.5px">单</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--faint);margin-top:5px">当前进行中：<b id="capNowVal" style="color:var(--text)">1 单</b>（演示）</div>
+        </div>
+        <div class="f-row">
+          <label class="fl">不报的类目（点选排除）</label>
+          <div class="cat-grid" id="banCats"></div>
+        </div>
+        <div class="f-row">
+          <label class="fl">我的同类报价历史（有历史才报）</label>
+          <div class="hist-tags" id="histTags"></div>
+        </div>
+        <p class="f-note">报价方式：师傅确认模型价——按类目工时估价（如 1.5h / ¥195），模型价低于最低金额则跳过。演示版订单为模拟数据，不连接四个平台的真实账号。</p>
+      </div>
+    </aside>
+  </div>
+
+  <p class="foot">演示版 · 订单与报价均为模拟数据，用于确认筛选流程和界面<br>正式版需四个平台的官方对接权限后接入真实订单</p>
+</div>
+
+<!-- quote modal -->
+<div class="mask" id="quoteMask" role="dialog" aria-modal="true" aria-labelledby="qmTitle">
+  <div class="sheet">
+    <h3 id="qmTitle">手动报价</h3>
+    <div class="s-sub" id="qmSub"></div>
+    <div class="est" id="qmEst"></div>
+    <label class="fl" for="qmPrice">报价金额（元）</label>
+    <input type="number" id="qmPrice" min="1" step="5">
+    <label class="fl" for="qmNote">给客户留言（可空）</label>
+    <input type="text" id="qmNote" placeholder="如：今天下午可上门，含辅料">
+    <div class="row-btns">
+      <button class="btn ghost" id="qmCancel">取消</button>
+      <button class="btn primary" id="qmOk">确认报价</button>
+    </div>
+  </div>
+</div>
+
+<!-- skip modal -->
+<div class="mask" id="skipMask" role="dialog" aria-modal="true" aria-labelledby="smTitle">
+  <div class="sheet">
+    <h3 id="smTitle">手动跳过</h3>
+    <div class="s-sub" id="smSub"></div>
+    <label class="fl" for="smReason">跳过理由（可空）</label>
+    <input type="text" id="smReason" placeholder="未填理由也可以">
+    <div class="row-btns">
+      <button class="btn ghost" id="smCancel">取消</button>
+      <button class="btn primary" id="smOk">确认跳过</button>
+    </div>
+  </div>
+</div>
+
+<!-- monitor alert popup -->
+<div class="alert-pop" id="alertPop" role="alert" aria-live="assertive">
+  <h4><span class="pulse on"></span>新单提醒 · 符合你的筛选规则</h4>
+  <div id="alertItems"></div>
+  <div class="row-btns">
+    <button class="btn ghost" id="alertClose">知道了</button>
+    <button class="btn" id="alertView">查看订单</button>
+    <button class="btn primary" id="alertQuote">去手动报价</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+
+/* ============ data ============ */
+var PLATS = {
+  jiang:{name:"匠多多", short:"匠", cls:"jiang"},
+  luban:{name:"鲁班",   short:"鲁", cls:"luban"},
+  gong: {name:"工奇兵", short:"工", cls:"gong"},
+  wan:  {name:"万师傅", short:"万", cls:"wan"}
+};
+/* categories I have quoted before (history) */
+var HISTORY = ["家具安装·床","家具安装·桌柜小件","灯具安装·吸顶灯","厨房安装·油烟机","家电安装·排风扇","家电安装·热水器","卫浴安装·花洒","水电维修·水龙头"];
+/* model hourly estimate per top-category */
+var MODEL = {
+  "家具安装":{rate:130, hours:1.5},
+  "灯具安装":{rate:110, hours:1.0},
+  "厨房安装":{rate:140, hours:1.5},
+  "家电安装":{rate:120, hours:1.2},
+  "卫浴安装":{rate:130, hours:1.3},
+  "门窗安装":{rate:150, hours:2.0},
+  "墙面修复":{rate:120, hours:2.0},
+  "水电维修":{rate:130, hours:1.0},
+  "送货":{rate:80, hours:1.0},
+  "搬运":{rate:90, hours:1.5}
+};
+var BAN_DEFAULT = ["墙面修复","门窗","浴柜","马桶","柜类安装"];
+var ALL_BAN = ["墙面修复","门窗","浴柜","马桶","柜类安装","空调安装","保洁清洗","开锁换锁"];
+
+var seq = 0;
+function oid(){ seq++; return "P5294" + String(2580000 + Math.floor(Math.random()*89999) + seq*137).slice(0,7); }
+function mk(plat, cat, sub, detail, dist, workers, minsAgo, area, fail){
+  return { id:oid(), plat:plat, cat:cat, sub:sub, detail:detail, dist:dist,
+    workers:workers, mins:minsAgo, area:area, status:"pending", reason:"", price:0,
+    fail: !!fail, histKey: cat+"·"+sub };
+}
+var orders = [
+  mk("jiang","家具安装","衣柜","衣柜 *1个 家具安装", 3.2, 1, 4, "万科城"),
+  mk("luban","家具安装","其它柜子","其它类柜子 *1个 家具安装", 2.1, 1, 6, "保利花园"),
+  mk("wan","家电安装","排风扇","排风扇安装 *1台", 4.0, 1, 9, "碧桂园凤凰城"),
+  mk("gong","家具安装","床","双人床 *1张 家具安装", 2.8, 1, 12, "恒大绿洲"),
+  mk("jiang","家具安装","衣柜","衣柜 *2个 家具安装", 6.0, 1, 15, "融创文旅城"),
+  mk("wan","卫浴安装","马桶","智能马桶安装 *1个", 1.9, 1, 18, "龙湖天街旁"),
+  mk("luban","送货","家具送货","沙发送货上楼 *1件", 3.5, 1, 21, "中海寰宇天下"),
+  mk("gong","厨房安装","油烟机","油烟机安装 *1台", 4.6, 1, 24, "绿地中央广场"),
+  mk("jiang","灯具安装","吸顶灯","吸顶灯 *3盏 灯具安装", 7.0, 1, 27, "金地自在城"),
+  mk("wan","家具安装","床","儿童床 *1张 家具安装", 3.9, 2, 31, "华润万象城旁"),
+  mk("luban","门窗安装","纱窗","纱窗安装 *4扇", 2.4, 1, 35, "招商雍华府"),
+  mk("gong","卫浴安装","浴柜","浴室柜安装 *1套", 4.4, 1, 38, "世茂璀璨天城"),
+  mk("jiang","水电维修","水龙头","厨房水龙头更换 *1个", 1.6, 1, 42, "万科城"),
+  mk("wan","搬运","家具搬运","衣柜搬运上楼 *1件", 2.2, 2, 46, "保利花园"),
+  mk("luban","家电安装","热水器","电热水器安装 *1台", 5.0, 1, 50, "碧桂园凤凰城"),
+  mk("gong","灯具安装","吊灯","水晶吊灯安装 *1盏", 3.3, 1, 54, "恒大绿洲", true),
+  mk("jiang","墙面修复","墙面修补","墙面开裂修复 约2㎡", 2.9, 1, 58, "融创文旅城"),
+  mk("wan","卫浴安装","花洒","花洒套装安装 *1套", 4.8, 1, 63, "龙湖天街旁"),
+  mk("luban","家具安装","桌柜小件","书桌 *1张 家具安装", 1.2, 1, 67, "中海寰宇天下"),
+  mk("gong","厨房安装","燃气灶","燃气灶安装 *1台", 3.7, 1, 71, "绿地中央广场"),
+  mk("jiang","家电安装","排风扇","排风扇安装 *2台", 8.5, 1, 76, "金地自在城"),
+  mk("wan","家具安装","衣柜","衣柜 *1个 家具安装", 4.2, 1, 81, "华润万象城旁"),
+  mk("luban","水电维修","电路检修","跳闸检修 *1次", 2.6, 1, 86, "招商雍华府"),
+  mk("gong","门窗安装","门锁","智能门锁安装 *1把", 1.8, 1, 91, "世茂璀璨天城")
+];
+
+/* 上一轮已处理的订单（与下方种子记录一一对应，统计由此汇总） */
+function done(id, plat, cat, sub, detail, dist, workers, minsAgo, area, status, price, reason){
+  var o = mk(plat, cat, sub, detail, dist, workers, minsAgo, area);
+  o.id = id; o.status = status; o.price = price; o.reason = reason;
+  return o;
+}
+orders = [
+  done("P52942589938","jiang","家具安装","衣柜","衣柜 *1个 家具安装",3.0,1,39,"万科城","skipped",0,"柜类安装不报价：家具安装 衣柜 衣柜 *1个 家具安装"),
+  done("P52942622529","luban","灯具安装","吸顶灯","吸顶灯 *2盏 灯具安装",6.0,1,39,"保利花园","skipped",0,"距离 6km 超过 5km"),
+  done("P52942660715","wan","家具安装","其它柜子","其它类柜子 *1个 家具安装",2.4,1,39,"碧桂园凤凰城","skipped",0,"柜类安装不报价：家具安装 其它柜子 其它类柜子 *1个 家具安装"),
+  done("P52942578380","gong","家具安装","床","双人床 *1张 家具安装",0.4,1,45,"恒大绿洲","quoted",195,"自动报价成功：师傅确认模型价，报价 ¥195"),
+  done("P52942481301","jiang","家电安装","浴霸","浴霸安装 *1台",2.2,1,45,"融创文旅城","skipped",0,"历史无同类报价（浴霸安装）"),
+  done("P52942578100","luban","卫浴安装","花洒","花洒套装安装 *1套",7.0,1,45,"龙湖天街旁","skipped",0,"距离 7km 超过 5km"),
+  done("P52937415423","wan","水电维修","水龙头","水龙头更换 *1个",0.5,1,46,"中海寰宇天下","failed",130,"报价失败：没有报价成功，请刷新重试")
+].concat(orders);
+
+var logs = [];           /* {time, tag, tagCls, oid, price, desc, fresh} */
+var lastRun = null;      /* {timeStr, newCount, quotedCount} */
+var countdown = 5*60;    /* seconds to next round */
+var running = false;
+var ongoing = 1;         /* jobs in progress (demo) */
+var logOpen = true;
+var mode = "quote";      /* "quote" = 自动报价 | "monitor" = 监控提醒（只提醒不报价） */
+var soundOn = true;
+var alertHits = [];
+
+/* ============ settings ============ */
+function settings(){
+  return {
+    refreshMin: Math.max(1, parseInt($("refreshMin").value,10) || 5),
+    maxDist: parseFloat($("maxDist").value) || 5,
+    minPrice: Math.max(0, parseInt($("minPrice").value,10) || 0),
+    exDelivery: $("exDelivery").checked,
+    exMulti: $("exMulti").checked,
+    needHistory: $("needHistory").checked,
+    useCapacity: $("useCapacity").checked,
+    capDay: Math.max(1, parseInt($("capDay").value,10) || 8),
+    capNow: Math.max(1, parseInt($("capNow").value,10) || 3),
+    bans: Array.prototype.slice.call(document.querySelectorAll("#banCats .cat-chip.on")).map(function(c){return c.textContent;})
+  };
+}
+function modelPrice(o){
+  var m = MODEL[o.cat] || {rate:120, hours:1.2};
+  var hours = m.hours * (o.workers>1 ? 1.4 : 1);
+  var raw = m.rate * hours + o.dist * 4;
+  var price = Math.round(raw/5)*5;
+  return { hours: Math.round(hours*10)/10, price: price };
+}
+function banHit(o, s){
+  for (var i=0;i<s.bans.length;i++){
+    var b = s.bans[i];
+    if (b==="柜类安装" && o.cat==="家具安装" && (o.sub.indexOf("柜")>-1 || o.sub==="衣柜")) return "柜类安装不报价：" + o.cat + " " + o.detail;
+    if (b==="门窗" && o.cat==="门窗安装") return "门窗类不报价：" + o.cat + " " + o.detail;
+    if (b==="浴柜" && o.sub==="浴柜") return "浴柜不报价：" + o.cat + " " + o.detail;
+    if (b==="马桶" && o.sub==="马桶") return "马桶不报价：" + o.cat + " " + o.detail;
+    if (b==="墙面修复" && o.cat==="墙面修复") return "修复类不报价：" + o.cat + " " + o.detail;
+    if (b==="空调安装" && o.sub==="空调") return "空调不报价：" + o.cat + " " + o.detail;
+    if (b==="保洁清洗" && o.cat==="保洁清洗") return "保洁类不报价：" + o.cat + " " + o.detail;
+    if (b==="开锁换锁" && o.cat==="开锁换锁") return "开锁类不报价：" + o.cat + " " + o.detail;
+  }
+  return "";
+}
+/* evaluate one order against rules -> {act:'quote'|'skip'|'fail', reason, price, hours} */
+function evaluate(o, s, quotedToday){
+  if (s.exDelivery && (o.cat==="送货" || o.cat==="搬运"))
+    return {act:"skip", reason:(o.cat==="送货"?"送货单已排除：":"搬运单已排除：") + o.cat + " " + o.detail};
+  var bh = banHit(o, s);
+  if (bh) return {act:"skip", reason:bh};
+  if (o.dist > s.maxDist)
+    return {act:"skip", reason:"距离 " + o.dist.toFixed(1).replace(/\.0$/,"") + "km 超过 " + s.maxDist + "km"};
+  if (s.exMulti && o.workers >= 2)
+    return {act:"skip", reason:"多人单不报：需 " + o.workers + " 人 · " + o.cat + " " + o.detail};
+  var mp = modelPrice(o);
+  if (mp.price < s.minPrice)
+    return {act:"skip", reason:"模型价 ¥" + mp.price + " 低于 ¥" + s.minPrice + " 起报线：" + o.cat + " " + o.sub};
+  if (s.needHistory && HISTORY.indexOf(o.histKey) === -1)
+    return {act:"skip", reason:"历史无同类报价（" + o.cat + " " + o.sub + "）"};
+  if (s.useCapacity && (quotedToday >= s.capDay || ongoing >= s.capNow))
+    return {act:"skip", reason:"超出接单能力：今日已报 " + quotedToday + "/" + s.capDay + " 单，进行中 " + ongoing + "/" + s.capNow + " 单"};
+  if (o.fail)
+    return {act:"fail", reason:"没有报价成功，请刷新重试", price:mp.price, hours:mp.hours};
+  return {act:"quote", reason:"师傅确认模型价，报价 ¥" + mp.price, price:mp.price, hours:mp.hours};
+}
+
+/* ============ helpers ============ */
+function nowTime(d){
+  d = d || new Date();
+  function p(n){ return (n<10?"0":"")+n; }
+  return p(d.getMonth()+1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function agoStr(mins){
+  if (mins < 60) return mins + " 分钟前";
+  return Math.floor(mins/60) + " 小时 " + (mins%60) + " 分前";
+}
+function esc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+var toastTimer = null;
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2400);
+}
+function quotedToday(){ return orders.filter(function(o){return o.status==="quoted";}).length; }
+
+/* ============ render: platforms ============ */
+function renderPlats(){
+  var html = "";
+  Object.keys(PLATS).forEach(function(k){
+    var p = PLATS[k];
+    var cnt = orders.filter(function(o){return o.plat===k && o.status==="pending";}).length;
+    html += '<div class="plat p-'+p.cls+'"><div class="logo">'+p.short+'</div>' +
+      '<div><div class="nm">'+p.name+'</div><div class="st"><span class="dot" style="background:var(--amber)"></span>演示模式 · 模拟数据</div></div>' +
+      '<div class="cnt"><b>'+cnt+'</b><span>待处理</span></div></div>';
+  });
+  $("platStrip").innerHTML = html;
+}
+
+/* ============ render: rules line ============ */
+function renderRules(){
+  var s = settings();
+  var parts = [];
+  if (mode === "monitor") parts.push("<b>监控模式：只提醒不报价</b> ·");
+  parts.push("每 <b>" + s.refreshMin + " 分钟</b>刷新");
+  parts.push("· <b>≤" + s.maxDist + "km</b>");
+  parts.push("· <b>¥" + s.minPrice + " 起</b>");
+  if (s.exDelivery) parts.push("· 排除送货/搬运");
+  if (s.exMulti) parts.push("· 多人单不报");
+  if (s.needHistory) parts.push("· 需有同类报价历史");
+  if (s.bans.length) parts.push("· 不报" + s.bans.join("/"));
+  if (s.useCapacity) parts.push("· 按接单能力判断");
+  var tail;
+  if (lastRun){
+    tail = " · 上轮 " + lastRun.timeStr + "：新单 " + lastRun.newCount + " 条，" + (lastRun.mode === "monitor" ? "提醒 " : "报价 ") + lastRun.quotedCount + " 单";
+  } else {
+    tail = " · 尚未执行";
+  }
+  var cd = "";
+  if ($("autoToggle").checked){
+    var m = Math.floor(countdown/60), sec = countdown%60;
+    cd = " · 下一轮 <b>" + m + ":" + (sec<10?"0":"") + sec + "</b> 后";
+  } else {
+    cd = " · 自动运行已暂停";
+  }
+  $("aqRules").innerHTML = parts.join(" ") + tail + cd;
+  $("maxDistVal").textContent = "≤ " + s.maxDist + " km";
+  $("capNowVal").textContent = ongoing + " 单";
+}
+
+/* ============ render: logs ============ */
+function renderLogs(){
+  var box = $("aqLog");
+  if (!logs.length){
+    box.innerHTML = '<div class="aq-empty">暂无自动记录，点「立即执行一轮」开始按规则筛选报价</div>';
+    return;
+  }
+  box.innerHTML = logs.map(function(l){
+    var price = l.price ? '<span class="log-price">¥' + l.price + '</span>' : '';
+    return '<div class="log-row' + (l.fresh ? ' fresh' : '') + '">' +
+      '<span class="log-t">' + l.time + '</span>' +
+      '<span class="tag ' + l.tagCls + '">' + l.tag + '</span>' +
+      '<span class="log-oid">' + l.oid + '</span>' + price +
+      '<span class="log-desc">' + l.desc + '</span></div>';
+  }).join("");
+  logs.forEach(function(l){ l.fresh = false; });
+}
+function addLog(tag, tagCls, o, price, desc, fresh){
+  logs.unshift({ time: nowTime(), tag: tag, tagCls: tagCls, oid: o ? o.id : "—", price: price || 0, desc: desc, fresh: !!fresh });
+  if (logs.length > 120) logs.length = 120;
+}
+
+/* ============ render: orders ============ */
+var platFilter = "all", statusFilter = "all";
+function statusLabel(o){
+  if (o.status==="pending") return '<span class="o-status pending">待处理</span>';
+  if (o.status==="quoted") return '<span class="o-status quoted">已报价 ¥' + o.price + '</span>';
+  if (o.status==="skipped") return '<span class="o-status skipped">已跳过</span>';
+  if (o.status==="alerted") return '<span class="o-status alerted">已提醒 · 待手动报价</span>';
+  return '<span class="o-status failed">报价失败</span>';
+}
+function renderOrders(){
+  var q = $("searchInput").value.trim();
+  var list = orders.filter(function(o){
+    if (platFilter!=="all" && o.plat!==platFilter) return false;
+    if (statusFilter!=="all" && o.status!==statusFilter) return false;
+    if (q && (o.id + o.cat + o.sub + o.detail + o.area + PLATS[o.plat].name).indexOf(q)===-1) return false;
+    return true;
+  });
+  var box = $("orderList");
+  if (!list.length){ box.innerHTML = '<div class="empty">没有符合条件的订单</div>'; }
+  else {
+    box.innerHTML = list.map(function(o){
+      var mp = modelPrice(o);
+      var acts = "";
+      if (o.status==="pending" || o.status==="failed"){
+        acts = '<div class="o-actions">' +
+          '<button class="btn primary sm" data-act="quote" data-id="'+o.id+'">报价 ¥'+mp.price+'</button>' +
+          '<button class="btn sm" data-act="skip" data-id="'+o.id+'">跳过</button>' +
+          '<button class="btn ghost sm" data-act="detail" data-id="'+o.id+'">查看筛选判断</button></div>';
+      } else if (o.status==="alerted"){
+        acts = '<div class="o-actions"><button class="btn primary sm" data-act="quote" data-id="'+o.id+'">手动报价 ¥'+mp.price+'</button>' +
+          '<button class="btn sm" data-act="skip" data-id="'+o.id+'">忽略</button></div>';
+      } else if (o.status==="skipped"){
+        acts = '<div class="o-actions"><button class="btn sm" data-act="quote" data-id="'+o.id+'">改为手动报价</button></div>';
+      }
+      var reason = o.reason ? '<div class="o-reason"><b>处理结果：</b>' + esc(o.reason) + '</div>' : "";
+      return '<article class="order">' +
+        '<div class="o-top"><span class="o-plat '+PLATS[o.plat].cls+'">'+PLATS[o.plat].name+'</span>' +
+        '<span class="o-id">'+o.id+'</span>' + statusLabel(o) +
+        '<span class="o-time">'+agoStr(o.mins)+'发布</span></div>' +
+        '<div class="o-title">'+esc(o.cat)+' · '+esc(o.detail)+'</div>' +
+        '<div class="o-meta"><span>距离 <b>'+o.dist.toFixed(1)+' km</b></span>' +
+        '<span>区域 <b>'+esc(o.area)+'</b></span>' +
+        '<span>人数 <b>'+o.workers+' 人</b></span>' +
+        '<span>模型估价 <span class="o-price">¥'+mp.price+'</span>（约 '+mp.hours+'h）</span>' +
+        '<span>同类历史 <b>'+(HISTORY.indexOf(o.histKey)>-1 ? "有" : "无")+'</b></span></div>' +
+        reason + acts + '</article>';
+    }).join("");
+  }
+  /* counts */
+  $("nAll").textContent = orders.length;
+  $("nPending").textContent = orders.filter(function(o){return o.status==="pending";}).length;
+  $("nQuoted").textContent = quotedToday();
+  $("nSkipped").textContent = orders.filter(function(o){return o.status==="skipped";}).length;
+  $("nFailed").textContent = orders.filter(function(o){return o.status==="failed";}).length;
+  $("nAlerted").textContent = orders.filter(function(o){return o.status==="alerted";}).length;
+  /* stats */
+  $("stNew").textContent = orders.length;
+  $("stQuoted").innerHTML = quotedToday() + " <small>单</small>";
+  $("stSkipped").innerHTML = orders.filter(function(o){return o.status==="skipped";}).length + " <small>单</small>";
+  var money = orders.filter(function(o){return o.status==="quoted";}).reduce(function(a,o){return a+o.price;},0);
+  $("stMoney").textContent = "¥" + money.toLocaleString();
+}
+function renderAll(){ renderPlats(); renderRules(); renderLogs(); renderOrders(); }
+
+/* ============ monitor mode: evaluate, alert, sound ============ */
+/* returns true when the order hits the rules -> alert only, never quotes */
+function monitorEval(o, s){
+  var r = evaluate(o, s, quotedToday());
+  if (r.act === "skip"){
+    o.status = "skipped"; o.reason = "监控未命中：" + r.reason;
+    addLog("跳过","skip",o,0,esc(r.reason), true);
+    return false;
+  }
+  var mp = modelPrice(o);
+  o.status = "alerted"; o.price = mp.price;
+  o.reason = "已提醒：符合筛选规则，模型价 ¥" + mp.price + "（监控模式只提醒，未报价）";
+  addLog("已提醒","alert",o,mp.price,"命中规则：" + esc(o.cat) + " " + esc(o.detail) + " · " + o.dist.toFixed(1) + "km · 模型价 ¥" + mp.price + "，等你手动报价", true);
+  return true;
+}
+var audioCtx = null;
+function beep(){
+  if (!soundOn) return;
+  try{
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    var t0 = audioCtx.currentTime;
+    [880, 1174].forEach(function(f, idx){
+      var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+      osc.type = "sine"; osc.frequency.value = f;
+      var st = t0 + idx * 0.18;
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(0.22, st + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + 0.32);
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(st); osc.stop(st + 0.36);
+    });
+  }catch(e){}
+}
+function showAlert(hits){
+  if (!hits.length) return;
+  alertHits = hits.slice();
+  $("alertItems").innerHTML = hits.map(function(o){
+    return '<div class="ap-item"><b>' + PLATS[o.plat].name + '</b> · ' + esc(o.cat) + ' ' + esc(o.detail) +
+      '<br>' + o.id + ' · ' + o.dist.toFixed(1) + 'km · ' + esc(o.area) + ' · 模型价 <span class="p">¥' + o.price + '</span></div>';
+  }).join("");
+  $("alertPop").classList.add("show");
+  beep();
+}
+
+/* ============ run one round ============ */
+function runRound(){
+  if (running) return;
+  var s = settings();
+  var pend = orders.filter(function(o){ return o.status==="pending" || o.status==="failed"; });
+  if (!pend.length){ toast("没有待处理订单，可先点「模拟新单到达」"); return; }
+  running = true;
+  $("runBtn").disabled = true; $("runBtn").textContent = mode === "monitor" ? "扫描中…" : "执行中…";
+  var newCount = pend.length, quoted = 0, i = 0, roundHits = [];
+  function step(){
+    if (i >= pend.length){
+      running = false;
+      $("runBtn").disabled = false; $("runBtn").textContent = mode === "monitor" ? "立即扫描一轮" : "立即执行一轮";
+      lastRun = { timeStr: nowTime(), newCount: newCount, quotedCount: quoted, mode: mode };
+      countdown = s.refreshMin * 60;
+      renderAll();
+      if (mode === "monitor"){
+        toast("本轮扫描完成：处理 " + newCount + " 单，提醒 " + quoted + " 单（未报价）");
+        if (roundHits.length) showAlert(roundHits);
+      } else {
+        toast("本轮完成：处理 " + newCount + " 单，报价 " + quoted + " 单");
+      }
+      return;
+    }
+    var o = pend[i]; i++;
+    if (mode === "monitor"){
+      if (monitorEval(o, s)){ roundHits.push(o); quoted++; }
+      renderAll();
+      setTimeout(step, 420);
+      return;
+    }
+    var r = evaluate(o, s, quotedToday());
+    if (r.act === "quote"){
+      o.status = "quoted"; o.price = r.price; o.reason = "自动报价成功：" + r.reason;
+      addLog("confirm","confirm",o,r.price,"待确认：模型估 " + r.hours + "h / ¥" + r.price + "，拟报 ¥" + r.price, true);
+      addLog("已报价","ok",o,r.price,"<b>师傅确认模型价</b>，报价 ¥" + r.price, true);
+      quoted++;
+    } else if (r.act === "fail"){
+      o.status = "failed"; o.price = r.price; o.reason = "报价失败：" + r.reason;
+      addLog("失败","fail",o,r.price,esc(r.reason), true);
+    } else {
+      o.status = "skipped"; o.reason = r.reason;
+      addLog("跳过","skip",o,0,esc(r.reason), true);
+    }
+    renderAll();
+    setTimeout(step, 420);
+  }
+  step();
+}
+
+/* ============ simulated new orders ============ */
+var NEW_POOL = [
+  ["jiang","家具安装","床","上下铺 *1张 家具安装",2.3,1,"万科城"],
+  ["luban","灯具安装","吸顶灯","吸顶灯 *2盏 灯具安装",3.1,1,"保利花园"],
+  ["wan","卫浴安装","马桶","马桶安装 *1个",2.7,1,"碧桂园凤凰城"],
+  ["gong","家具安装","衣柜","衣柜 *1个 家具安装",4.9,1,"恒大绿洲"],
+  ["jiang","厨房安装","油烟机","油烟机安装 *1台",1.4,1,"融创文旅城"],
+  ["luban","搬运","大件搬运","冰箱搬运 *1台",3.8,2,"中海寰宇天下"],
+  ["wan","家电安装","热水器","燃气热水器安装 *1台",5.6,1,"龙湖天街旁"],
+  ["gong","水电维修","水龙头","水龙头更换 *2个",2.0,1,"绿地中央广场"]
+];
+var newIdx = 0;
+function addNewOrders(){
+  var n = 3, added = [];
+  for (var i=0;i<n;i++){
+    var t = NEW_POOL[newIdx % NEW_POOL.length]; newIdx++;
+    var o = mk(t[0],t[1],t[2],t[3],t[4],t[5],1,t[6]);
+    orders.unshift(o); added.push(o);
+  }
+  if (mode === "monitor"){
+    var s = settings(), hits = [];
+    added.forEach(function(o){ if (monitorEval(o, s)) hits.push(o); });
+    renderAll();
+    if (hits.length){ showAlert(hits); toast("新单到达：命中 " + hits.length + " 单，已提醒（未报价）"); }
+    else toast("新单到达 3 条，均未命中规则");
+    return;
+  }
+  added.forEach(function(o){ addLog("新单","confirm",o,0,"新订单到达：" + PLATS[o.plat].name + " · " + esc(o.cat) + " " + esc(o.detail) + " · " + o.dist.toFixed(1) + "km", true); });
+  renderAll();
+  toast("新增 3 条订单，已进入待处理");
+}
+
+/* ============ manual quote / skip ============ */
+var curOrder = null;
+function findOrder(id){ return orders.filter(function(o){return o.id===id;})[0]; }
+function openQuote(o){
+  curOrder = o;
+  var mp = modelPrice(o);
+  $("qmSub").textContent = PLATS[o.plat].name + " · " + o.id + " · " + o.cat + " " + o.detail;
+  $("qmEst").innerHTML = "模型估价：约 <b>" + mp.hours + "h</b> / <b>¥" + mp.price + "</b> · 距离 " + o.dist.toFixed(1) + "km · " + esc(o.area) +
+    "<br>筛选判断：" + esc(evaluate(o, settings(), quotedToday()).act === "quote" ? "符合当前规则，可自动报价" : evaluate(o, settings(), quotedToday()).reason);
+  $("qmPrice").value = mp.price;
+  $("qmNote").value = "";
+  $("quoteMask").classList.add("open");
+  setTimeout(function(){ $("qmPrice").focus(); $("qmPrice").select(); }, 60);
+}
+function openSkip(o){
+  curOrder = o;
+  $("smSub").textContent = PLATS[o.plat].name + " · " + o.id + " · " + o.cat + " " + o.detail;
+  $("smReason").value = "";
+  $("skipMask").classList.add("open");
+  setTimeout(function(){ $("smReason").focus(); }, 60);
+}
+function closeMasks(){ $("quoteMask").classList.remove("open"); $("skipMask").classList.remove("open"); }
+
+/* ============ events ============ */
+$("runBtn").addEventListener("click", runRound);
+$("newOrdersBtn").addEventListener("click", addNewOrders);
+$("collapseBtn").addEventListener("click", function(){
+  logOpen = !logOpen;
+  $("logWrap").style.display = logOpen ? "" : "none";
+  this.textContent = logOpen ? (mode === "monitor" ? "收起监控记录" : "收起自动记录") : (mode === "monitor" ? "展开监控记录" : "展开自动记录");
+});
+/* mode switch */
+function setMode(m){
+  if (mode === m) return;
+  mode = m;
+  $("modeQuote").classList.toggle("on", m === "quote");
+  $("modeMonitor").classList.toggle("on", m === "monitor");
+  $("aqTitleText").textContent = m === "monitor" ? "监控提醒" : "自动报价";
+  $("runBtn").textContent = m === "monitor" ? "立即扫描一轮" : "立即执行一轮";
+  $("collapseBtn").textContent = logOpen ? (m === "monitor" ? "收起监控记录" : "收起自动记录") : (m === "monitor" ? "展开监控记录" : "展开自动记录");
+  renderRules();
+  toast(m === "monitor" ? "已切换监控提醒模式：只提醒，不自动报价" : "已切换自动报价模式");
+}
+$("modeQuote").addEventListener("click", function(){ setMode("quote"); });
+$("modeMonitor").addEventListener("click", function(){ setMode("monitor"); });
+/* alert sound toggle */
+$("soundBtn").addEventListener("click", function(){
+  soundOn = !soundOn;
+  this.textContent = "提醒声音：" + (soundOn ? "开" : "关");
+  if (soundOn) beep();
+  toast("提醒声音已" + (soundOn ? "开启" : "关闭"));
+});
+/* alert popup buttons */
+$("alertClose").addEventListener("click", function(){ $("alertPop").classList.remove("show"); });
+$("alertView").addEventListener("click", function(){
+  $("alertPop").classList.remove("show");
+  platFilter = "all"; statusFilter = "alerted";
+  document.querySelectorAll("#platTabs .ptab").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-p") === "all"); });
+  document.querySelectorAll("#statusTabs .tab").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-s") === "alerted"); });
+  renderOrders();
+  var rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("orderList").scrollIntoView({ behavior: rm ? "auto" : "smooth", block: "start" });
+});
+$("alertQuote").addEventListener("click", function(){
+  $("alertPop").classList.remove("show");
+  if (alertHits.length) openQuote(alertHits[0]);
+});
+$("autoToggle").addEventListener("change", function(){
+  $("aqPulse").className = "pulse" + (this.checked ? " on" : " off");
+  if (this.checked){ countdown = settings().refreshMin * 60; toast("自动报价已开启"); }
+  else toast("自动报价已暂停，可手动执行一轮");
+  renderRules();
+});
+$("orderList").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-act]"); if (!b) return;
+  var o = findOrder(b.getAttribute("data-id")); if (!o) return;
+  var act = b.getAttribute("data-act");
+  if (act === "quote") openQuote(o);
+  else if (act === "skip") openSkip(o);
+  else if (act === "detail"){
+    var r = evaluate(o, settings(), quotedToday());
+    var msg = r.act === "quote" ? "符合规则，模型价 ¥" + r.price + "，可报价" : "会被跳过/失败：" + r.reason;
+    toast(msg);
+  }
+});
+$("qmCancel").addEventListener("click", closeMasks);
+$("smCancel").addEventListener("click", closeMasks);
+$("quoteMask").addEventListener("click", function(e){ if (e.target===this) closeMasks(); });
+$("skipMask").addEventListener("click", function(e){ if (e.target===this) closeMasks(); });
+$("qmOk").addEventListener("click", function(){
+  var price = parseInt($("qmPrice").value, 10);
+  if (!price || price <= 0){ toast("请填写有效报价金额"); return; }
+  curOrder.status = "quoted"; curOrder.price = price;
+  curOrder.reason = "手动报价成功：¥" + price + ($("qmNote").value.trim() ? " · 留言：" + $("qmNote").value.trim() : "");
+  addLog("已报价","manual",curOrder,price,"<b>师傅手动报价</b>，报价 ¥" + price, true);
+  closeMasks(); renderAll(); toast("已报价 ¥" + price);
+});
+$("smOk").addEventListener("click", function(){
+  var reason = $("smReason").value.trim() || "未填理由";
+  curOrder.status = "skipped";
+  curOrder.reason = "师傅手动跳过：" + reason;
+  addLog("跳过","manual",curOrder,0,"师傅手动跳过：" + esc(reason), true);
+  closeMasks(); renderAll(); toast("已跳过该订单");
+});
+document.querySelectorAll("#platTabs .ptab").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("#platTabs .ptab").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on"); platFilter = b.getAttribute("data-p"); renderOrders();
+  });
+});
+document.querySelectorAll("#statusTabs .tab").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("#statusTabs .tab").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on"); statusFilter = b.getAttribute("data-s"); renderOrders();
+  });
+});
+$("searchInput").addEventListener("input", renderOrders);
+$("clearSearch").addEventListener("click", function(){ $("searchInput").value=""; renderOrders(); });
+
+/* filter controls */
+["refreshMin","minPrice","capDay","capNow"].forEach(function(id){
+  $(id).addEventListener("input", function(){ if (id==="refreshMin") countdown = settings().refreshMin*60; renderRules(); });
+});
+["exDelivery","exMulti","needHistory","useCapacity"].forEach(function(id){
+  $(id).addEventListener("change", renderRules);
+});
+$("maxDist").addEventListener("input", renderRules);
+$("useCapacity").addEventListener("change", function(){ $("capRow").style.opacity = this.checked ? "1" : ".45"; });
+
+/* ban category chips */
+$("banCats").innerHTML = ALL_BAN.map(function(c){
+  return '<button class="cat-chip' + (BAN_DEFAULT.indexOf(c)>-1 ? " on" : "") + '" type="button">' + c + '</button>';
+}).join("");
+$("banCats").addEventListener("click", function(e){
+  var b = e.target.closest(".cat-chip"); if (!b) return;
+  b.classList.toggle("on"); renderRules();
+});
+/* history tags */
+$("histTags").innerHTML = HISTORY.map(function(h){ return "<span>" + h + "</span>"; }).join("");
+
+/* ============ seed logs (like the screenshot) ============ */
+(function seed(){
+  var demo = [
+    ["跳过","skip","P52942589938",0,"柜类安装不报价：家具安装 衣柜 衣柜 *1个 家具安装"],
+    ["跳过","skip","P52942622529",0,"距离 6km 超过 5km"],
+    ["跳过","skip","P52942660715",0,"柜类安装不报价：家具安装 其它柜子 其它类柜子 *1个 家具安装"],
+    ["已报价","ok","P52942578380",195,"<b>师傅确认模型价</b>，报价 ¥195"],
+    ["跳过","skip","P52942481301",0,"历史无同类报价（浴霸安装）"],
+    ["跳过","skip","P52942578100",0,"距离 7km 超过 5km"],
+    ["confirm","confirm","P52942578380",195,"待确认：模型估 1.5h / ¥195，拟报 ¥195"],
+    ["跳过","skip","P52937415423",0,"师傅手动跳过：未填理由"],
+    ["失败","fail","P52937415423",130,"没有报价成功，请刷新重试"]
+  ];
+  var base = new Date(); base.setMinutes(base.getMinutes() - 9);
+  demo.forEach(function(d, i){
+    var t = new Date(base.getTime() + i * 45000);
+    logs.push({ time: nowTime(t), tag: d[0], tagCls: d[1], oid: d[2], price: d[3], desc: d[4], fresh:false });
+  });
+  lastRun = { timeStr: nowTime(base), newCount: 9, quotedCount: 1 };
+})();
+
+/* ============ monitor mode: simulated live arrivals ============ */
+var arrivalTick = 0;
+setInterval(function(){
+  if (mode !== "monitor" || !$("autoToggle").checked || running) return;
+  arrivalTick++;
+  if (arrivalTick % 50 !== 0) return;
+  var t = NEW_POOL[newIdx % NEW_POOL.length]; newIdx++;
+  var o = mk(t[0],t[1],t[2],t[3],t[4],t[5],0,t[6]);
+  orders.unshift(o);
+  var hit = monitorEval(o, settings());
+  renderAll();
+  if (hit) showAlert([o]);
+}, 1000);
+
+/* ============ countdown ticker ============ */
+setInterval(function(){
+  if ($("autoToggle").checked && !running){
+    countdown--;
+    if (countdown <= 0){ runRound(); countdown = settings().refreshMin * 60; }
+    renderRules();
+  }
+}, 1000);
+
+renderAll();
+})();
+</script>
+</body>
+</html>
